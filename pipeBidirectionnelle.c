@@ -1,3 +1,5 @@
+
+
 #include<stdio.h>
 
 #include<unistd.h>
@@ -14,116 +16,80 @@
 
 #define TAILLE 100
 
-int main() 
+int main()
 {
-      
-           
-        int coderetour;
-        pid_t pid;
-        char messageP[TAILLE];
-        //char messageF[TAILLE];
-        char receptionP[TAILLE];
-        //char receptionF[TAILLE];
+        char message[TAILLE];
+        char reponse[TAILLE];
 
+        int codederetour;
         int peretofils[2];
         int filstopere[2];
 
-        int sortieFIls = peretofils[0];
-        int entreeFIls = filstopere[1];
-        int sortiePere = peretofils[0];
-        int entreePere = filstopere[1];
-
-
-        if (pipe(peretofils) == -1) {
-                perror("pipe ");
+        if(pipe(peretofils)==-1)
+        {
+                perror("peretofils ");
                 exit(EXIT_FAILURE);
         }
 
-        if (pipe(filstopere) == -1) {
-                perror("pipe ");
-                exit(EXIT_FAILURE);
-        }
-        
-
-            
-        
-        
-
-        pid=fork();
-
-        if (pid == -1) {
-                perror("fork ");
+        if(pipe(filstopere)==-1)
+        {
+                perror("filstopere ");
                 exit(EXIT_FAILURE);
         }
 
-        if (pid == 0) // FILS
+       int pid=fork();
+
+        if(pid==0)
+        {//Fils
+               
+                        
+                
+                
+                printf("je suis le fils\n");
+                if(read(peretofils[0],reponse,10)==-1)
+                {
+                        perror("read");
+                }
+
+                printf("j'ai recu %s\n",reponse);
+
+                printf("j'envoie un message maintenant à mon pere\n");
+                fgets(message,10,stdin);
+                if(write(filstopere[1],message,10)==-1)
+                {
+                        perror("write fils ");
+                }
+                
+        }
+        else
         {
               
-               printf("Saisie Fils\n");
-                fgets(messageP, 50, stdin);
+              
+              
+              printf("je suis le pere\n");
+              //close(peretofils[0]); descriteur de lecture bloque pour le pere
+              fgets(message,10,stdin);
+              
+              if(write(peretofils[1],message,10)==-1)
+              {
+                       perror("write");
+              }
+              
                 
-                messageP[50]='\0';
-                
+              if(read(filstopere[0],reponse,10)==-1)
+              {
+                      perror("read in father ");
+                      
+              }  
 
-                if(write(entreeFIls, messageP,  TAILLE)==-1)
-                {
-                        perror("write ");
-                        exit(0);
-                }
+              printf("message de mon fils %s\n",reponse);
 
-                printf("lecture fils\n");
-                int t = read(sortieFIls, receptionP, TAILLE);
-                
-                if (t == -1) {
-                        perror("read ");
-                        exit(0);
-                }
-
-
-        
-                printf("je suis le fils, j'ai recu de mon pere : %s\n", receptionP);
-
-               
-                exit(0);
-                
-
+              wait(&codederetour);
+              printf("mon fils s'est terminé avec le code %d\n",WEXITSTATUS(codederetour));
+          
         }
-      
-        
-        printf("lecture pere \n");
-        int t = read(sortiePere, receptionP, 50);
-        printf("je suis le pere, j'ai recu de mon fils: %s\n",receptionP);
-
-        if (t == -1) {
-                perror("read");
-                exit(0);
-        }
-
-
-
-                 //Pere
-        printf("Saisie pere \n");
-        int octet = strlen(fgets(messageP, 100, stdin));
-
-        messageP[octet - 1] = '\0'; // eliminer le retour chariot
-
-        printf("je suis le pere, j'envoie un message à mon fils %s \n", messageP);
         
 
-        //printf("FILS");
-
-        int dhh = strlen(messageP);
-
-        if (write(entreePere, messageP, dhh) == -1) {
-                perror("xxxxxxx");
-                exit(0);
-        }
-
-
-        wait(&coderetour); //le pere doit attendre le fils
-        
-        
-        
         return 0;
 
 }
